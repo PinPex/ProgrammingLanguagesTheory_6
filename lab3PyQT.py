@@ -1,9 +1,7 @@
-from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QMessageBox, QFileDialog, QDialog, QTableWidgetItem, QTableWidget, QTextEdit
-import  PyQt6.QtWidgets
+from PyQt6.QtWidgets import *
 from PyQt6 import uic
 from typing import *
 from dataclasses import dataclass
-from colorama import Fore
 import os
 import sys
 import json
@@ -22,23 +20,13 @@ def throwMessageBox(self, windowTitle: str, message: str):
     mes.setWindowTitle(windowTitle)
     mes.setText(message)
 def machine_input(filename):
-    try:
-        with open(filename, "r") as json_file:
-            data = json.load(json_file)
-    except FileNotFoundError:
-        print(Fore.RED + "Файл с данными не найден.")
-        exit(-1)
+    with open(filename, "r") as json_file:
+        data = json.load(json_file)
     states = data["states"]
     alphabet = data["alphabet"]
     func = data["Func"]
     start = data["start"]
     ends = data["ends"]
-    '''lbl_machine = Label(window, text=f"M({states}, {alphabet}, δ, {start}, {ends})", font=("Arial", 15), padx=5,
-                        pady=10)
-    # lbl_machine.place(x=10, y=40)
-    lbl_machine.grid(row=1, column=0, sticky="w")'''
-    print(f"M({states}, {alphabet}, δ, {start}, {ends})")
-    print(f"δ = {list(func.keys())}")
     machine = Machine(states, alphabet, func, start, ends)
     return machine
 
@@ -57,7 +45,7 @@ class MainWindow(QMainWindow):
     def loadMachine(self):
         filepath = self.pathLine.text()
         if not os.path.exists(filepath):
-            throwMessageBox(self,"Ошибка пути к файлу","Файла не существует. Проверьте правильность "
+            throwMessageBox(self,"Ошибка","Файла не существует. Проверьте правильность "
                                                        "введенного пути")
             return
 
@@ -93,7 +81,6 @@ class DrawMachine(QDialog):
                         text = passage
                 self.machineTable.setItem(i + 1, j + 1, QTableWidgetItem(text))
 
-        # Установка размеров ячеек в соответствии с их содержимым
         self.machineTable.resizeColumnsToContents()
         self.machineTable.resizeRowsToContents()
         self.machineTable.removeColumn(self.machineTable.columnCount() - 1)
@@ -103,7 +90,7 @@ class DrawMachine(QDialog):
             throwMessageBox(self,"Ошибка", "Введите цепочку")
             return
         if not all([c in self.machine.V for c in sequence]):
-            throwMessageBox(self, "Ошибка", "Ошибка. Слово состоит из символов, которых нет в алфавите.\n")
+            throwMessageBox(self, "Ошибка", "Слово состоит из символов, которых нет в алфавите.\n")
             return
         self.outCheckingSequences = OutCheckingSequences(machine=self.machine,sequence=sequence)
 
@@ -111,12 +98,12 @@ class DrawMachine(QDialog):
 class OutCheckingSequences(QDialog):
     def __init__(self, machine, sequence, parent=None):
         super().__init__(parent)
-        uic.loadUi('outCheckingSequences.ui', self)  # Load the .ui file
+        uic.loadUi('outCheckingSequences.ui', self)
         self.machine = machine
         self.sequence = sequence
         self.check_button()
         self.quitButton.clicked.connect(self.close)
-        self.show()  # Show the GUI
+        self.show()
 
     def check_button(self):
         self.check_word(self.sequence, self.machine, self.machine.Start)
@@ -128,7 +115,8 @@ class OutCheckingSequences(QDialog):
             if state in machine.End:
                 self.sequenceText.insertPlainText("Цепочка принадлежит заданному ДКА.\n")
             else:
-                self.sequenceText.insertPlainText("Ошибка. Конечное состояние не принадлежит множеству конечных состояний ДКА.\n")
+                self.sequenceText.insertPlainText("Ошибка. Конечное состояние не принадлежит множеству конечных "
+                                                  "состояний ДКА.\n")
             return
 
         self.sequenceText.insertPlainText(f"({state}, {word})\n")
