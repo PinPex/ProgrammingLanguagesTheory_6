@@ -26,13 +26,22 @@ def convert_array_to_dict(array):
         dict_result.setdefault(item[0], {})[item[1]] = item[2]
     return dict_result
 
+def passEmptyStrings(f):
+    line = f.readline()
+    while (line := f.readline()).strip() == "":
+        pass
+    return line
+
+def passWhileNotFound(f, s):
+    while f.readline().strip() != s:
+        pass
+
 def machineInputTxt(filename):
     with open(filename) as f:
         try:
-            states = f.readline().replace(" ", "").strip().split(":")[1].removesuffix(";").split(",")
-            alphabet = f.readline().replace(" ", "").strip().split(":")[1].removesuffix(";").split(",")
-            while f.readline().strip() != "{":
-                pass
+            states = passEmptyStrings(f).replace(" ", "").strip().split(":")[1].removesuffix(";").split(",")
+            alphabet = passEmptyStrings(f).replace(" ", "").strip().split(":")[1].removesuffix(";").split(",")
+            passWhileNotFound(f,"{")
             func_array = []
             while (line := f.readline().strip()) != "}":
                 line = line.replace(" ", "").strip().removesuffix(";")
@@ -41,18 +50,11 @@ def machineInputTxt(filename):
                 symbol = vars[0].strip().split('-')[1]
                 next_state = vars[1].strip()
                 func_array.append((first_state,  symbol, next_state))
-            print(convert_array_to_dict(func_array))
 
-
-            start = f.readline().replace(" ", "").strip().split(":")[1].removesuffix(";")
-            end = f.readline().replace(" ", "").strip().split(":")[1].removesuffix(";")
-            print(states)
-            print(alphabet)
-            print(start)
-            print(end)
+            start = passEmptyStrings(f).replace(" ", "").strip().split(":")[1].removesuffix(";")
+            end = passEmptyStrings(f).replace(" ", "").strip().split(":")[1].removesuffix(";")
             return Machine(states, alphabet, convert_array_to_dict(func_array), start[0], end[0])
         except Exception:
-            print("Invalid syntax")
             return -1
 
 
