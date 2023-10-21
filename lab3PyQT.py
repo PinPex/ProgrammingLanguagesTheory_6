@@ -19,16 +19,42 @@ def throwMessageBox(self, windowTitle: str, message: str):
     mes.show()
     mes.setWindowTitle(windowTitle)
     mes.setText(message)
-def machine_input(filename):
-    with open(filename, "r") as json_file:
-        data = json.load(json_file)
-    states = data["states"]
-    alphabet = data["alphabet"]
-    func = data["Func"]
-    start = data["start"]
-    ends = data["ends"]
-    machine = Machine(states, alphabet, func, start, ends)
-    return machine
+
+def convert_array_to_dict(array):
+    dict_result = {}
+    for item in array:
+        dict_result.setdefault(item[0], {})[item[1]] = item[2]
+    return dict_result
+
+def machineInputTxt(filename):
+    with open(filename) as f:
+        try:
+            states = f.readline().replace(" ", "").strip().split(":")[1].removesuffix(";").split(",")
+            alphabet = f.readline().replace(" ", "").strip().split(":")[1].removesuffix(";").split(",")
+            while f.readline().strip() != "{":
+                pass
+            func_array = []
+            while (line := f.readline().strip()) != "}":
+                line = line.replace(" ", "").strip().removesuffix(";")
+                vars = line.split('->')
+                first_state = vars[0].strip().split('-')[0]
+                symbol = vars[0].strip().split('-')[1]
+                next_state = vars[1].strip()
+                func_array.append((first_state,  symbol, next_state))
+            print(convert_array_to_dict(func_array))
+
+
+            start = f.readline().replace(" ", "").strip().split(":")[1].removesuffix(";")
+            end = f.readline().replace(" ", "").strip().split(":")[1].removesuffix(";")
+            print(states)
+            print(alphabet)
+            print(start)
+            print(end)
+            return Machine(states, alphabet, convert_array_to_dict(func_array), start[0], end[0])
+        except Exception:
+            print("Invalid syntax")
+            return -1
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -49,24 +75,42 @@ class MainWindow(QMainWindow):
                                                        "введенного пути")
             return
 
-        self.machine = machine_input(filepath)
-
-        self.drawMachine = DrawMachine(self.machine)
+        self.machine = machineInputTxt(filepath)
+        print(self.machine)
+        if self.machine != -1:
+            self.drawMachine = DrawMachine(self.machine)
+        else:
+            throwMessageBox(self,"Ошибка", "Ошибка в синтаксисе файла.\n"
+                                           "Убедитесь, что файл имеет следующий синтаксис:\n"
+                                           "states: p, q, r;\n"
+                                           "alphabet: 0, 1, '';\n"
+                                           "Func:\n"
+                                           "{\n"
+                                           "p 0->q;\n"
+                                           "p-1->p;\n"
+                                           "q-0->r;\n"
+                                           "q-1->p;\n"
+                                           "r-0->r;\n"
+                                           "}\n"
+                                           "start: p;\n"
+                                           "end: r;"
+                            )
+            return
 
 class DrawMachine(QDialog):
     def __init__(self, machine, parent = None):
         super().__init__(parent)
-        uic.loadUi('drawMachine.ui', self) # Load the .ui file
-        self.show() # Show the GUI
+        uic.loadUi('drawMachine.ui', self)
         self.machine = machine
         self.printMachine(machine)
         self.checkSequenceButton.clicked.connect(self.checkSequence)
+        self.show()
 
     def printMachine(self, machine):
         self.machineTable.setRowCount(len(machine.Q) + 1)
         self.machineTable.setColumnCount(len(machine.V) + 1)
-
         self.machineTable.setItem(0, 0, QTableWidgetItem("δ"))
+
         for i, v in enumerate(machine.V):
             self.machineTable.setItem(0, i + 1, QTableWidgetItem(f"'{v}'"))
 
@@ -83,7 +127,8 @@ class DrawMachine(QDialog):
 
         self.machineTable.resizeColumnsToContents()
         self.machineTable.resizeRowsToContents()
-        self.machineTable.removeColumn(self.machineTable.columnCount() - 1)
+        #self.machineTable.removeColumn(self.machineTable.columnCount() - 1)
+
     def checkSequence(self):
         sequence = self.sequenceLine.text()
         if sequence == "":
@@ -93,7 +138,6 @@ class DrawMachine(QDialog):
             throwMessageBox(self, "Ошибка", "Слово состоит из символов, которых нет в алфавите.\n")
             return
         self.outCheckingSequences = OutCheckingSequences(machine=self.machine,sequence=sequence)
-
 
 class OutCheckingSequences(QDialog):
     def __init__(self, machine, sequence, parent=None):
@@ -141,6 +185,5 @@ class OutCheckingSequences(QDialog):
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
-
     window.show()
     app.exec()
