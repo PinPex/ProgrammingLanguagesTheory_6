@@ -27,7 +27,7 @@ def convert_array_to_dict(array):
     return dict_result
 
 def passEmptyStrings(f):
-    line = f.readline()
+    line = ""
     while (line := f.readline()).strip() == "":
         pass
     return line
@@ -43,7 +43,7 @@ def machineInputTxt(filename):
             alphabet = passEmptyStrings(f).replace(" ", "").strip().split(":")[1].removesuffix(";").split(",")
             passWhileNotFound(f,"{")
             func_array = []
-            while (line := f.readline().strip()) != "}":
+            while (line := passEmptyStrings(f).strip()) != "}":
                 line = line.replace(" ", "").strip().removesuffix(";")
                 vars = line.split('->')
                 first_state = vars[0].strip().split('-')[0]
