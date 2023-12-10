@@ -1,0 +1,15 @@
+states: q0, q1, q2, q3, q4, q5, q6, qf;
+alphabet: a, b, c, Z;
+Func:
+{
+    (q0,2,Z)=(q1,Z);
+    (q1,2,Z)=(q2,Z);
+    (q2,2,Z)=(q3,Z);
+    (q3,2,Z)=(q4,Z);
+    (q4,2,Z)=(q3,Z);
+    (q3,ε,Z)=(qf,ε);
+}
+
+start: q0;
+end: qf;
+endStack: Z;

@@ -6,13 +6,31 @@ import os
 import sys
 import json
 
-@dataclass
-class Machine:
-    Q: List[str]
-    V: List[str]
-    Func: Dict[str, Dict[str, str]]
-    Start: str
-    End: str
+
+class DMP:
+    def __init__(self, Q, V, Funcs, Start, End, EndStack):
+        self.Q = Q
+        self.V = V
+        self.loadFunc(Funcs)
+        self.Start = Start
+        self.End = End
+        self.EndStack = EndStack
+        self.output = ""
+
+    def loadFunc(self, Funcs):
+        self.Func = {}
+        for func in Funcs:
+            self.addFunc(func)
+
+    def addFunc(self, Func):
+        self.Func[str( (Func[0][0], Func[0][1], Func[0][2]) )] = str( (Func[1][0], Func[1][1], Func[1][2]) )
+    def getFunc(self, Func_ind):
+
+        Func_id_str = str( (Func_ind[0], Func_ind[1], Func_ind[2]) )
+        if Func_id_str in self.Func:
+            return eval( self.Func[Func_id_str] )
+        else:
+            return -1
 
 def throwMessageBox(self, windowTitle: str, message: str):
     mes = QMessageBox(self)
@@ -20,43 +38,39 @@ def throwMessageBox(self, windowTitle: str, message: str):
     mes.setWindowTitle(windowTitle)
     mes.setText(message)
 
-def convert_array_to_dict(array):
-    dict_result = {}
-    for item in array:
-        dict_result.setdefault(item[0], {})[item[1]] = item[2]
-    return dict_result
-
-def passEmptyStrings(f):
-    line = ""
-    while (line := f.readline()).strip() == "":
-        pass
-    return line
-
-def passWhileNotFound(f, s):
-    while f.readline().strip() != s:
-        pass
-
 def machineInputTxt(filename):
-    with open(filename) as f:
+    def passWhileNotFound(f, s):
+        while f.readline().strip() != s:
+            pass
+
+    def passEmptyStrings(f):
+        line = ""
+        while (line := f.readline()).strip() == "":
+            pass
+        return line
+
+    with open(filename, encoding="utf-8") as f:
         try:
             states = passEmptyStrings(f).replace(" ", "").strip().split(":")[1].removesuffix(";").split(",")
             alphabet = passEmptyStrings(f).replace(" ", "").strip().split(":")[1].removesuffix(";").split(",")
             passWhileNotFound(f,"{")
             func_array = []
-            while (line := passEmptyStrings(f).strip()) != "}":
-                line = line.replace(" ", "").strip().removesuffix(";")
-                vars = line.split('->')
-                first_state = vars[0].strip().split('-')[0]
-                symbol = vars[0].strip().split('-')[1]
-                next_state = vars[1].strip()
-                func_array.append((first_state,  symbol, next_state))
 
+
+            while (line := passEmptyStrings(f).strip()) != "}":
+                line = line.replace(" ", "").strip().replace(";", "").replace(")", "").replace("(", "")
+                vars = line.split('=')
+                vars = [i.split(',') for i in vars]
+
+                if len(vars[0][1]) > 1 or len(vars[0][2]) > 1:
+                    raise Exception("Must be symbols, not substrings")
+                func_array.append(vars)
             start = passEmptyStrings(f).replace(" ", "").strip().split(":")[1].removesuffix(";")
             end = passEmptyStrings(f).replace(" ", "").strip().split(":")[1].removesuffix(";")
-            return Machine(states, alphabet, convert_array_to_dict(func_array), start[0], end[0])
+            endStack = passEmptyStrings(f).replace(" ", "").strip().split(":")[1].removesuffix(";")
+            return DMP(states, alphabet, func_array, start, end, endStack)
         except Exception:
             return -1
-
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -78,25 +92,11 @@ class MainWindow(QMainWindow):
             return
 
         self.machine = machineInputTxt(filepath)
-        print(self.machine)
+        #print(self.machine)
         if self.machine != -1:
             self.drawMachine = DrawMachine(self.machine)
         else:
-            throwMessageBox(self,"Ошибка", "Ошибка в синтаксисе файла.\n"
-                                           "Убедитесь, что файл имеет следующий синтаксис:\n"
-                                           "states: p, q, r;\n"
-                                           "alphabet: 0, 1, '';\n"
-                                           "Func:\n"
-                                           "{\n"
-                                           "p 0->q;\n"
-                                           "p-1->p;\n"
-                                           "q-0->r;\n"
-                                           "q-1->p;\n"
-                                           "r-0->r;\n"
-                                           "}\n"
-                                           "start: p;\n"
-                                           "end: r;"
-                            )
+            throwMessageBox(self,"Ошибка", "Ошибка в синтаксисе файла.")
             return
 
 class DrawMachine(QDialog):
@@ -107,39 +107,24 @@ class DrawMachine(QDialog):
         self.printMachine(machine)
         self.checkSequenceButton.clicked.connect(self.checkSequence)
         self.show()
+        self.outCheckingSequences = []
 
     def printMachine(self, machine):
-        self.machineTable.setRowCount(len(machine.Q) + 1)
-        self.machineTable.setColumnCount(len(machine.V) + 1)
-        self.machineTable.setItem(0, 0, QTableWidgetItem("δ"))
-
-        for i, v in enumerate(machine.V):
-            self.machineTable.setItem(0, i + 1, QTableWidgetItem(f"'{v}'"))
-
-        for i, q in enumerate(machine.Q):
-            self.machineTable.setItem(i + 1, 0, QTableWidgetItem(f"{q}:"))
-            for j, v in enumerate(machine.V):
-                text = "λ"
-                state = machine.Func.get(q)
-                if state is not None:
-                    passage = state.get(v)
-                    if passage is not None:
-                        text = passage
-                self.machineTable.setItem(i + 1, j + 1, QTableWidgetItem(text))
-
-        self.machineTable.resizeColumnsToContents()
-        self.machineTable.resizeRowsToContents()
-        #self.machineTable.removeColumn(self.machineTable.columnCount() - 1)
+        #print(machine.Func)
+        funcs = str(machine.Func).replace("{","").replace("}", "").replace('"',"")\
+        .replace("'","").replace(":"," =").replace("),", ")\n")
+        self.textEdit.setText(funcs)
+        pass
 
     def checkSequence(self):
         sequence = self.sequenceLine.text()
         if sequence == "":
             throwMessageBox(self,"Ошибка", "Введите цепочку")
             return
-        if not all([c in self.machine.V for c in sequence]):
-            throwMessageBox(self, "Ошибка", "Слово состоит из символов, которых нет в алфавите.\n")
-            return
-        self.outCheckingSequences = OutCheckingSequences(machine=self.machine,sequence=sequence)
+        #if sequence not in [self.outCheckingSequences[i].sequence for i in range(len(self.outCheckingSequences))]: #and len(self.outCheckingSequences) < 500:
+        self.outCheckingSequences.append(OutCheckingSequences(machine=self.machine,sequence=sequence))
+
+
 
 class OutCheckingSequences(QDialog):
     def __init__(self, machine, sequence, parent=None):
@@ -154,35 +139,55 @@ class OutCheckingSequences(QDialog):
     def check_button(self):
         self.check_word(self.sequence, self.machine, self.machine.Start)
 
-    def check_word(self, word, machine, state):
-        if word == "λ":
-            self.sequenceText.insertPlainText(f"({state}, {word})\n")
-            self.sequenceText.insertPlainText(f"Конечное состояние: {state}\n")
-            if state in machine.End:
-                self.sequenceText.insertPlainText("Цепочка принадлежит заданному ДКА.\n")
-            else:
-                self.sequenceText.insertPlainText("Ошибка. Конечное состояние не принадлежит множеству конечных "
-                                                  "состояний ДКА.\n")
-            return
+    def check_word(self, word, machine: DMP, state):
+        machine.output = ""
+        seq: str = word
+        stat: str = state
+        stack: str = machine.EndStack
 
-        self.sequenceText.insertPlainText(f"({state}, {word})\n")
-        if len(word) > 1:
-            self.sequenceText.insertPlainText(f"(δ({state},{word[0]}), {word[1:]})\n")
-            try:
-                state = machine.Func[state][word[0]]
-            except KeyError:
-                self.sequenceText.insertPlainText("Ошибка. Отсутствует переход для данного состояния.\n")
-                return
-            word = word[1:]
+        output = ""
+
+        seq_sym = seq[0] if (len(seq) != 0) else "ε"
+        stk_sym = stack[0] if (len(stack) != 0) else "ε"
+
+        while (func := machine.getFunc((stat, seq_sym, stk_sym))) != -1:
+            fseq = seq if len(seq) != 0 else "ε"
+            fstack = stack if len(stack) != 0 else "ε"
+
+            output += f"({stat},{fseq},{fstack},{machine.output})\n"
+
+            seq = seq[1:] if len(seq) != 0 else "ε"
+            stack = stack[1:] if len(stack) != 0 else "ε"
+
+            stat = func[0]
+            stack = ("" if func[1] == "ε" else func[1]) + stack
+            machine.output += ("" if func[2] == "ε" else func[2])
+
+            seq_sym = seq[0] if (len(seq) != 0) else "ε"
+            stk_sym = stack[0] if (len(stack) != 0) else "ε"
+
+        fseq = seq if len(seq) != 0 else "ε"
+        fstack = stack if len(stack) != 0 else "ε"
+        output += f"({stat},{fseq},{fstack},{machine.output})\n"
+
+        if len(stack) == 0 and seq == "ε" and stat == machine.End:
+            output += (f"Последовательность пуста, стек пуст, достигнуто конечное состояние \n=> Цепочка подходит языку X \n=>"
+                       f"Перевод произведен")
         else:
-            self.sequenceText.insertPlainText(f"(δ({state},{word[0]}), λ)\n")
-            try:
-                state = machine.Func[state][word[0]]
-            except KeyError:
-                self.sequenceText.insertPlainText("Ошибка. Отсутсвует переход для данного состояния.\n")
-                return
-            word = "λ"
-        self.check_word(word, machine, state)
+            if stat != machine.End:
+                output += (f"Отсутствует переход из состояния '{stat}' по символу '{seq_sym}' последовательности "
+                           f"и символу '{stk_sym}' стека\n"
+                           f"Конечное состояние не достигнуто\n")
+            if len(stack) != 0:
+                output += f"Стек не опустошен\n"
+            if seq != "ε":
+                output += f"Последовательность не пуста\n"
+            output += "=> Цепочка не подходит языку X => Перевод невозможен"
+        self.sequenceText.setText(output)
+
+    def closeEvent(self, event):
+        #self.parent().outCheckingSequences.remove(self)
+        event.accept()
 
 def main():
     app = QApplication(sys.argv)
