@@ -172,7 +172,17 @@ class OutCheckingSequences(QDialog):
 
             stat = func[0]
 
+            lst = []
+            for x in func[1]:
+                if x not in machine.V3:
+                    lst.append(x)
 
+            if len(lst) != 0:
+                if len(lst) == 1:
+                    output += f"Ошибка, символа {', '.join(i for i in lst)} нет в списке символов стека\n"
+                else:
+                    output += f"Ошибка, символов {', '.join(i for i in lst)} нет в списке символов стека\n"
+                break
 
             if stat not in machine.Q:
                 output += f"Ошибка, состояния {stat} нет в списке состояний\n"
