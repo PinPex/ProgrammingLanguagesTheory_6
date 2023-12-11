@@ -117,35 +117,39 @@ class DrawMachine(QDialog):
         pass
 
     def checkSequence(self):
-        sequence = self.sequenceLine.text()
+        sequence: str = self.sequenceLine.text()
         if sequence == "":
             throwMessageBox(self,"Ошибка", "Введите цепочку")
             return
+        sequence = sequence.replace(" ","")
+        sequences = sequence.split(";")
         #if sequence not in [self.outCheckingSequences[i].sequence for i in range(len(self.outCheckingSequences))]: #and len(self.outCheckingSequences) < 500:
-        self.outCheckingSequences.append(OutCheckingSequences(machine=self.machine,sequence=sequence))
+        self.outCheckingSequences.append(OutCheckingSequences(machine=self.machine,sequences=sequences))
 
 
 
 class OutCheckingSequences(QDialog):
-    def __init__(self, machine, sequence, parent=None):
+    def __init__(self, machine, sequences, parent=None):
         super().__init__(parent)
         uic.loadUi('outCheckingSequences.ui', self)
         self.machine = machine
-        self.sequence = sequence
+        self.sequences = sequences
         self.check_button()
         self.quitButton.clicked.connect(self.close)
         self.show()
 
     def check_button(self):
-        self.check_word(self.sequence, self.machine, self.machine.Start)
+        for seq in self.sequences:
+            self.check_word(seq, self.machine, self.machine.Start)
 
     def check_word(self, word, machine: DMP, state):
+        prevText = self.sequenceText.toPlainText()
         machine.output = ""
         seq: str = word
         stat: str = state
         stack: str = machine.EndStack
 
-        output = ""
+        output = f"\n###### Проверка цепочки {seq} ######\n"
 
         seq_sym = seq[0] if (len(seq) != 0) else "ε"
         stk_sym = stack[0] if (len(stack) != 0) else "ε"
@@ -183,7 +187,7 @@ class OutCheckingSequences(QDialog):
             if seq != "ε":
                 output += f"Последовательность не пуста\n"
             output += "=> Цепочка не подходит языку X => Перевод невозможен"
-        self.sequenceText.setText(output)
+        self.sequenceText.setText(prevText + output)
 
     def closeEvent(self, event):
         #self.parent().outCheckingSequences.remove(self)
