@@ -166,14 +166,22 @@ class OutCheckingSequences(QDialog):
             foutput = machine.output if (len(machine.output) != 0) else "λ"
             output += f"({stat},{fseq},{fstack},{foutput})\n"
 
+
             seq = seq[1:] if len(seq) != 0 else "ε"
             stack = stack[1:] if len(stack) != 0 else "ε"
 
             stat = func[0]
 
+
+
             if stat not in machine.Q:
                 output += f"Ошибка, состояния {stat} нет в списке состояний\n"
                 break
+
+            if seq_sym not in machine.V1:
+                output += f"Ошибка, символа {seq_sym} нет в списке символов последовательности\n"
+                break
+
 
 
             stack = ("" if func[1] == "ε" else func[1]) + stack
@@ -191,7 +199,7 @@ class OutCheckingSequences(QDialog):
 
             seq_sym = seq[0] if (len(seq) != 0) else "ε"
             stk_sym = stack[0] if (len(stack) != 0) else "ε"
-        if func == -1:
+        if func == -1 and stat != machine.End:
             output += (f"Отсутствует переход из состояния '{stat}' по символу '{seq_sym}' последовательности "
                        f"и символу '{stk_sym}' стека\n")
 
