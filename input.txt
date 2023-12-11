@@ -2,18 +2,18 @@ states: q0, q1, q2, q3, q4, q5, q6, qf;
 alphabet: a, b, c, Z;
 Func:
 {
-    (q0,a,Z)=(q1,Z,a);
-    (q1,a,Z)=(q2,Z,a);
-    (q2,a,Z)=(q3,Z,a);
-    (q3,a,Z)=(q2,Z,a);
-    (q2,b,Z)=(q4,Z,b);
-    (q4,b,Z)=(q5,bZ,b);
-    (q4,b,b)=(q5,bb,b);
-    (q5,b,b)=(q4,b,b);
-    (q4,c,b)=(q6,ε,c);
-    (q6,c,b)=(q6,ε,c);
-    (q6,ε,Z)=(qf,ε,c);
-    (q4,ε,Z)=(qf,ε,c);
+    (q0,a,Z)=(q1,Z,λ);
+    (q1,a,Z)=(q2,Z,λ);
+    (q2,a,Z)=(q3,Z,λ);
+    (q3,a,Z)=(q2,Z,λ);
+    (q2,b,Z)=(q4,Z,λ);
+    (q4,b,Z)=(q5,bZ,λ);
+    (q4,b,b)=(q5,bb,λ);
+    (q5,b,b)=(q4,b,λ);
+    (q4,c,b)=(q6,ε,λ);
+    (q6,c,b)=(q6,ε,λ);
+    (q6,ε,Z)=(qf,ε,λ);
+    (q4,ε,Z)=(qf,ε,λ);
 }
 
 start: q0;

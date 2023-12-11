@@ -155,24 +155,25 @@ class OutCheckingSequences(QDialog):
         stk_sym = stack[0] if (len(stack) != 0) else "ε"
 
         while (func := machine.getFunc((stat, seq_sym, stk_sym))) != -1:
-            fseq = seq if len(seq) != 0 else "ε"
-            fstack = stack if len(stack) != 0 else "ε"
-
-            output += f"({stat},{fseq},{fstack},{machine.output})\n"
+            fseq = seq if len(seq) != 0 else "λ"
+            fstack = stack if len(stack) != 0 else "λ"
+            foutput = machine.output if (len(machine.output) != 0) else "λ"
+            output += f"({stat},{fseq},{fstack},{foutput})\n"
 
             seq = seq[1:] if len(seq) != 0 else "ε"
             stack = stack[1:] if len(stack) != 0 else "ε"
 
             stat = func[0]
             stack = ("" if func[1] == "ε" else func[1]) + stack
-            machine.output += ("" if func[2] == "ε" else func[2])
+            machine.output += ("" if func[2] == "λ" else func[2])
 
             seq_sym = seq[0] if (len(seq) != 0) else "ε"
             stk_sym = stack[0] if (len(stack) != 0) else "ε"
 
-        fseq = seq if len(seq) != 0 else "ε"
-        fstack = stack if len(stack) != 0 else "ε"
-        output += f"({stat},{fseq},{fstack},{machine.output})\n"
+        fseq = seq if len(seq) != 0 and seq != "ε" else "λ"
+        fstack = stack if len(stack) != 0 else "λ"
+        foutput = machine.output if (len(machine.output) != 0) else "λ"
+        output += f"({stat},{fseq},{fstack},{foutput})\n"
 
         if len(stack) == 0 and seq == "ε" and stat == machine.End:
             output += (f"Последовательность пуста, стек пуст, достигнуто конечное состояние \n=> Цепочка подходит языку X \n=>"
