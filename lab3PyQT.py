@@ -158,6 +158,8 @@ class OutCheckingSequences(QDialog):
         seq_sym = seq[0] if (len(seq) != 0) else "ε"
         stk_sym = stack[0] if (len(stack) != 0) else "ε"
 
+        func = 0
+
         while (func := machine.getFunc((stat, seq_sym, stk_sym))) != -1:
             fseq = seq if len(seq) != 0 else "λ"
             fstack = stack if len(stack) != 0 else "λ"
@@ -176,15 +178,22 @@ class OutCheckingSequences(QDialog):
 
             stack = ("" if func[1] == "ε" else func[1]) + stack
 
-            if func[2] in machine.V2:
+            break_ = False
+            for i in func[2].split():
+                if i not in machine.V2:
+                    output += f"Ошибка, символа {i} нет в списке переменных для перевода\n"
+                    break_ = True
+
+            if not break_:
                 machine.output += ("" if func[2] == "λ" else func[2])
             else:
-                output += f"Ошибка, символа {func[2]} нет в списке переменных для перевода\n"
                 break
 
             seq_sym = seq[0] if (len(seq) != 0) else "ε"
             stk_sym = stack[0] if (len(stack) != 0) else "ε"
-
+        if func == -1:
+            output += (f"Отсутствует переход из состояния '{stat}' по символу '{seq_sym}' последовательности "
+                       f"и символу '{stk_sym}' стека\n")
 
 
 
@@ -198,9 +207,7 @@ class OutCheckingSequences(QDialog):
                        f"Перевод произведен")
         else:
             if stat != machine.End:
-                output += (f"Отсутствует переход из состояния '{stat}' по символу '{seq_sym}' последовательности "
-                           f"и символу '{stk_sym}' стека\n"
-                           f"Конечное состояние не достигнуто\n")
+                output += f"Конечное состояние не достигнуто\n"
             if len(stack) != 0:
                 output += f"Стек не опустошен\n"
             if seq != "ε":
