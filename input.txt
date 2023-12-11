@@ -1,15 +1,17 @@
 states: q0, q1, q2, q3, q4, q5, q6, qf;
-alphabet: a, b, c, Z;
+alphabet X: a, b, c, λ;
+alphabet Y: 0, 1, λ;
+alphabet stack: a, b, c, Z;
 Func:
 {
     (q0,a,Z)=(q1,Z,λ);
-    (q1,a,Z)=(q2,Z,λ);
-    (q2,a,Z)=(q3,Z,λ);
-    (q3,a,Z)=(q2,Z,λ);
-    (q2,b,Z)=(q4,Z,λ);
-    (q4,b,Z)=(q5,bZ,λ);
-    (q4,b,b)=(q5,bb,λ);
-    (q5,b,b)=(q4,b,λ);
+    (q1,a,Z)=(q2,Z,a);
+    (q2,a,Z)=(q3,Z,b);
+    (q3,a,Z)=(q2,Z,a);
+    (q2,b,Z)=(q4,Z,1);
+    (q4,b,Z)=(q5,bZ,1);
+    (q4,b,b)=(q5,bb,0);
+    (q5,b,b)=(q4,b,0);
     (q4,c,b)=(q6,ε,λ);
     (q6,c,b)=(q6,ε,λ);
     (q6,ε,Z)=(qf,ε,λ);

@@ -10,7 +10,9 @@ import json
 class DMP:
     def __init__(self, Q, V, Funcs, Start, End, EndStack):
         self.Q = Q
-        self.V = V
+        self.V1 = V[0]
+        self.V2 = V[1]
+        self.V3 = V[2]
         self.loadFunc(Funcs)
         self.Start = Start
         self.End = End
@@ -52,7 +54,9 @@ def machineInputTxt(filename):
     with open(filename, encoding="utf-8") as f:
         try:
             states = passEmptyStrings(f).replace(" ", "").strip().split(":")[1].removesuffix(";").split(",")
-            alphabet = passEmptyStrings(f).replace(" ", "").strip().split(":")[1].removesuffix(";").split(",")
+            alphabet1 = passEmptyStrings(f).replace(" ", "").strip().split(":")[1].removesuffix(";").split(",")
+            alphabet2 = passEmptyStrings(f).replace(" ", "").strip().split(":")[1].removesuffix(";").split(",")
+            alphabet3 = passEmptyStrings(f).replace(" ", "").strip().split(":")[1].removesuffix(";").split(",")
             passWhileNotFound(f,"{")
             func_array = []
 
@@ -68,7 +72,7 @@ def machineInputTxt(filename):
             start = passEmptyStrings(f).replace(" ", "").strip().split(":")[1].removesuffix(";")
             end = passEmptyStrings(f).replace(" ", "").strip().split(":")[1].removesuffix(";")
             endStack = passEmptyStrings(f).replace(" ", "").strip().split(":")[1].removesuffix(";")
-            return DMP(states, alphabet, func_array, start, end, endStack)
+            return DMP(states, [alphabet1, alphabet2, alphabet3], func_array, start, end, endStack)
         except Exception:
             return -1
 
@@ -164,11 +168,25 @@ class OutCheckingSequences(QDialog):
             stack = stack[1:] if len(stack) != 0 else "ε"
 
             stat = func[0]
+
+            if stat not in machine.Q:
+                output += f"Ошибка, состояния {stat} нет в списке состояний\n"
+                break
+
+
             stack = ("" if func[1] == "ε" else func[1]) + stack
-            machine.output += ("" if func[2] == "λ" else func[2])
+
+            if func[2] in machine.V2:
+                machine.output += ("" if func[2] == "λ" else func[2])
+            else:
+                output += f"Ошибка, символа {func[2]} нет в списке переменных для перевода\n"
+                break
 
             seq_sym = seq[0] if (len(seq) != 0) else "ε"
             stk_sym = stack[0] if (len(stack) != 0) else "ε"
+
+
+
 
         fseq = seq if len(seq) != 0 and seq != "ε" else "λ"
         fstack = stack if len(stack) != 0 else "λ"
