@@ -149,7 +149,7 @@ class OutCheckingSequences(QDialog):
         stat: str = state
         stack: str = machine.EndStack
 
-        output = f"\n###### Проверка цепочки {seq} ######\n"
+        output = f"###### Проверка цепочки {seq} ######\n"
 
         seq_sym = seq[0] if (len(seq) != 0) else "ε"
         stk_sym = stack[0] if (len(stack) != 0) else "ε"
@@ -187,6 +187,7 @@ class OutCheckingSequences(QDialog):
             if seq != "ε":
                 output += f"Последовательность не пуста\n"
             output += "=> Цепочка не подходит языку X => Перевод невозможен"
+        output += "\n"
         self.sequenceText.setText(prevText + output)
 
     def closeEvent(self, event):
